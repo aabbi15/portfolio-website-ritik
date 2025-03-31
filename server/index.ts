@@ -207,3 +207,6 @@ app.use((req, res, next) => {
     process.exit(1);
   }
 })();
+
+// Export the app as a serverless function for Vercel
+export default app;
