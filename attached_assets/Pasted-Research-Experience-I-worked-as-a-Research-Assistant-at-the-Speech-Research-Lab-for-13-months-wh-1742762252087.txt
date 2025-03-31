@@ -1,0 +1,83 @@
+Research Experience:
+ I worked as a Research Assistant at the Speech Research Lab for 13 months, where I was actively
+ involved in cutting-edge research in speech processing. My work primarily focused on analyzing various
+ feature sets such as MFCC (Mel-Frequency Cepstral Coefficients), LFCC (Linear-Frequency Cepstral
+ Coefficients), and LFRCC (Linear-Frequency Residual Cepstral Coefficients).
+ In addition to feature extraction, I gained extensive experience working with Machine Learning and
+ Deep Learning models applied to speech-related tasks. I specifically worked on advanced speech
+ technologies like Whisper, wav2vec 2.0, and AASIST, enhancing my understanding of state-of-the-art
+ speech recognition and speaker verification systems.
+ I was also part of the data collection team creating the world’s first dysarthric speech dataset in
+ Indian languages. As part of this initiative, I conducted fieldwork, including data collection at
+ Dhirubhai Ambani Hospital, ensuring high-quality and diverse data acquisition.
+ Additionally, I contributed to a government-sponsored project funded by the Ministry of Electronics
+ and Information Technology (MeitY) for 3 months. This opportunity allowed me to collaborate on
+ impactful projects addressing real-world challenges in speech and audio processing.
+ During the summer of 2024, I had the opportunity to mentor three students from KL University
+ Hyderabad, guiding them in their research projects:
+ ● TeagerEnergy Cepstral Coefficients for Audio Deepfake Detection: This work was accepted
+ at APSIPA ASC 2024, showcasing its relevance and impact. Link
+ ● Singfake Detection
+ ● LFRCCforAudioDeepfake Detection
+ This mentorship experience enabled me to develop leadership and mentoring skills, while also
+ contributing to innovative research in the rapidly evolving area of deepfake detection.
+ Mystrong command of Python and its associated libraries has been integral to implementing and
+ optimizing speech and audio models effectively.
+ I have also contributed to international research dissemination with submissions to prestigious
+ conferences, including:
+ ● Odyssey: The Speaker and Language Recognition Workshop
+ ● Interspeech: The Conference of the International Speech Communication Association
+ ● APSIPA:Asia-Pacific Signal and Information Processing Association Conference
+ Notably, my paper submitted to APSIPA was accepted, reflecting the quality and significance of my
+ research contributions.
+Through this journey, I have gained extensive hands-on experience in speech research, data collection,
+ mentorship, and collaborative project execution, strengthening my commitment to advancing the field of
+ speech and audio technology.
+ Internship Experience: (6 weeks)
+ I interned as a Solutions Software Engineer Intern at OpsHub Inc. from May 2023 to July 2023 in
+ Ahmedabad, Gujarat. During this industrial experience:
+ ● Ideveloped a Java-based Reset Password Utility for OpsHub’s OIM product, streamlining
+ password reset processes and significantly enhancing system security.
+ ● Icontributed to migration projects, facilitating seamless transitions for clients to OpsHub’s
+ solutions or other target platforms.
+ ● Igained hands-on experience with Spring and Spring Boot frameworks, which provided me with
+ practical insights into their versatile applications and importance in modern software
+ development.
+ This internship strengthened my software development skills, particularly in Java and related frameworks,
+ and equipped me with practical knowledge of solving real-world software engineering challenges.
+ Rural Internship Experience:
+ I completed a 21-day mandatory internship with Elixir Foundation, where we worked in rural areas of
+ Ahmedabad to bridge the gap between government initiatives and the local communities. During this
+ internship, our primary role was to educate rural residents about various government schemes and the
+ benefits they could avail to improve their quality of life.
+ Our team conducted on-ground awareness sessions to explain how these schemes could address critical
+ issues such as healthcare, education, financial support, and agricultural aid. To ensure accessibility and
+ practical solutions, we also provided technology-based interventions that simplified processes like
+ scheme enrollment and accessing digital resources.
+ This experience allowed me to:
+ ● Developeffective communication skills to convey complex information to diverse audiences.
+ ● Understand the challenges faced by rural communities and propose practical solutions tailored
+ to their needs.
+ ● Collaborate with a team to solve real-world problems, ensuring impactful outreach.
+ Through this internship, I not only contributed to empowering rural communities but also gained valuable
+ insights into grassroots development and the role of technology in driving social progress.
+Co-Curricular Activities:
+ ● AcademicAchievements:
+ ○ Secured 2nd position in the International Mathematics Olympiad at the school level
+ during my 11th standard, showcasing strong analytical and problem-solving abilities.
+ ○ Represented Gujarat State at the National Level UCMAS Competition, a prestigious
+ mental arithmetic contest. At the district level, I won the Silver Medal for exceptional
+ performance.
+ ● SportsParticipation:
+ ○ Actively participated in sports and was a part of both my school and college basketball
+ teams, which helped me build teamwork, discipline, and leadership skills.
+ ● Leadership Role:
+ ○ Servedas the Deputy Convener of the Student Placement Cell in my college, where I
+ played a pivotal role in managing placements for 650 students. My key responsibilities
+ included:
+ ■ Conducting Pre-Placement Preparation Sessions to enhance students' readiness
+ for job opportunities.
+ ■ Organizing and overseeing Pre-Placement Tests to assess and refine student
+ competencies.
+ ■ Coordinating with company officials during recruitment drives to ensure smooth
+ operations and successful placement processes

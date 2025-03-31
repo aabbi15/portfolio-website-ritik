@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Allow all crawlers to access content
+Sitemap: https://ritikmahyavanshi.com/sitemap.xml
+
+# Crawl-delay directive suggests to crawlers how many seconds to wait between requests
+Crawl-delay: 5
