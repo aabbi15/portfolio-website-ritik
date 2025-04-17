@@ -49,24 +49,28 @@ app.use('/uploads', express.static('public/uploads', {
   lastModified: true
 }));
 
-// Session configuration with efficient memory usage
+// Session configuration optimized for serverless environment
 app.use(session({
-  secret: "portfolio-admin-secret", // In production, use env var
+  secret: process.env.SESSION_SECRET || "portfolio-admin-secret",
   resave: false,
   saveUninitialized: false,
   store: new MemoryStore({
     checkPeriod: 86400000, // prune expired entries every 24h
-    max: 1000, // Maximum number of sessions in memory
+    max: 500, // Lower for serverless - Maximum number of sessions in memory
     ttl: 86400000 // Session TTL (24 hours)
   }),
   cookie: { 
-    secure: false, // set to true if using https
+    // In production with https, set secure to true
+    secure: process.env.NODE_ENV === 'production', 
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
     path: '/',
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   }
 }));
+
+// This is important for Vercel deployments or any hosting behind a proxy
+app.set('trust proxy', 1);
 
 // Enhanced performance monitoring and logging middleware
 app.use((req, res, next) => {
@@ -196,17 +200,19 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    const PORT = parseInt(process.env.PORT || "5000", 10);
-    const HOST = 'localhost'; // Change from '0.0.0.0' to 'localhost'
-
-    app.listen(PORT, HOST, () => {
-      console.log(`Server is running at http://${HOST}:${PORT}`);
+    // ALWAYS serve the app on port 5000
+    // this serves both the API and the client.
+    // It is the only port that is not firewalled.
+    const port = 5000;
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${port}`);
     });
   } catch (error) {
     log(`Failed to start the server: ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   }
 })();
-
-// Export the app as a serverless function for Vercel
-export default app;

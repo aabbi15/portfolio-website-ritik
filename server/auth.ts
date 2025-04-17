@@ -29,15 +29,8 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "portfolio-admin-secret",
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore,
-  };
-
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
+  // Note: Session is already set up in server/index.ts
+  // We just initialize passport here
   app.use(passport.initialize());
   app.use(passport.session());
 
