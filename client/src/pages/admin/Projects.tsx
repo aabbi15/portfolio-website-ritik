@@ -98,7 +98,9 @@ type ProjectFormValues = z.infer<typeof projectFormSchema>;
 
 export default function AdminProjects() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -111,7 +113,10 @@ export default function AdminProjects() {
   
   const deleteProjectMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/projects/${id}`);
+      await apiRequest(`/api/admin/projects/${id}`, { 
+        method: "DELETE",
+        credentials: "include"
+      });
       return id;
     },
     onSuccess: () => {
@@ -145,12 +150,56 @@ export default function AdminProjects() {
     mode: "onChange",
   });
 
+  // Edit mutation for updating existing projects
+  const editProjectMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: ProjectFormValues }) => {
+      try {
+        // Use the API schema to transform the form data
+        const apiData = projectApiSchema.parse(data);
+        return await apiRequest(`/api/admin/projects/${id}`, { 
+          method: "PUT",
+          credentials: "include" 
+        }, apiData);
+      } catch (error) {
+        console.error("Edit project error:", error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Project updated",
+        description: "Your project has been updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      setShowEditDialog(false);
+      setEditId(null);
+      form.reset();
+      setImagePreview("");
+      setUploadedImage(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update project",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Create mutation for new projects
   const createProjectMutation = useMutation({
     mutationFn: async (data: ProjectFormValues) => {
-      // Use the API schema to transform the form data
-      const apiData = projectApiSchema.parse(data);
-      const response = await apiRequest("POST", "/api/admin/projects", apiData);
-      return response.json();
+      try {
+        // Use the API schema to transform the form data
+        const apiData = projectApiSchema.parse(data);
+        return await apiRequest("/api/admin/projects", { 
+          method: "POST",
+          credentials: "include" 
+        }, apiData);
+      } catch (error) {
+        console.error("Create project error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -193,10 +242,30 @@ export default function AdminProjects() {
     fileInputRef.current?.click();
   };
 
+  const handleEdit = (data: ProjectFormValues) => {
+    if (!editId) return;
+    
+    // If we have an uploaded image, use it
+    if (uploadedImage && imagePreview) {
+      const formWithImage = {
+        ...data,
+        image: imagePreview,
+      };
+      editProjectMutation.mutate({ id: editId, data: formWithImage });
+    } else {
+      editProjectMutation.mutate({ id: editId, data });
+    }
+  };
+  
   const onSubmit = (data: ProjectFormValues) => {
-    // If we have an uploaded image, we need to upload it to a hosting service
-    // and get a URL before submitting the form
-    // For now, we'll just use the preview URL as a demonstration
+    // If we're editing an existing project
+    if (editId) {
+      handleEdit(data);
+      return;
+    }
+    
+    // Otherwise, we're creating a new project
+    // If we have an uploaded image, use the data URL
     if (uploadedImage && imagePreview) {
       const formWithImage = {
         ...data,
@@ -276,7 +345,33 @@ export default function AdminProjects() {
                             <Eye className="h-4 w-4" />
                           </a>
                         </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon"
+                          onClick={() => {
+                            // Set the edit ID to identify which project to edit
+                            setEditId(project.id);
+                            
+                            // Pre-populate the form with existing project data
+                            form.reset({
+                              title: project.title,
+                              description: project.description,
+                              image: project.image,
+                              category: project.category as "frontend" | "backend" | "fullstack" | "app" | "ml" | "dl" | "ai",
+                              technologies: project.technologies.join(', '),
+                              tags: project.tags.join(', '),
+                              link: project.link,
+                            });
+                            
+                            // If there's an image, set it as preview
+                            if (project.image) {
+                              setImagePreview(project.image);
+                            }
+                            
+                            // Show the edit dialog
+                            setShowEditDialog(true);
+                          }}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -325,6 +420,7 @@ export default function AdminProjects() {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Add Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -505,6 +601,213 @@ export default function AdminProjects() {
                     </>
                   ) : (
                     "Create Project"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Dialog */}
+      <Dialog 
+        open={showEditDialog} 
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) {
+            // Reset form and state when dialog is closed
+            setEditId(null);
+            form.reset();
+            setImagePreview("");
+            setUploadedImage(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Project</DialogTitle>
+            <DialogDescription>
+              Update your project details
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Project title" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <FormControl>
+                        <select
+                          className="w-full px-3 py-2 border border-input rounded-md"
+                          {...field}
+                        >
+                          <option value="frontend">Frontend</option>
+                          <option value="backend">Backend</option>
+                          <option value="fullstack">Full Stack</option>
+                          <option value="app">App Development</option>
+                          <option value="ml">Machine Learning</option>
+                          <option value="dl">Deep Learning</option>
+                          <option value="ai">AI</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Project description" className="min-h-[120px]" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Image URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://example.com/image.jpg" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="space-y-2">
+                  <Label>Or Upload a New Image</Label>
+                  <div className="flex flex-col gap-4">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      className="hidden" 
+                      accept="image/*" 
+                      onChange={handleImageUpload}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={triggerFileUpload}
+                      className="flex items-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Choose File
+                    </Button>
+                    
+                    {imagePreview && (
+                      <div className="mt-2">
+                        <p className="text-sm text-muted-foreground mb-2">Image Preview:</p>
+                        <div className="relative rounded-md overflow-hidden border w-40 h-40">
+                          <img 
+                            src={imagePreview} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="technologies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Technologies</FormLabel>
+                      <FormControl>
+                        <Input placeholder="React, Node.js, Express" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="tags"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tags</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Web, Frontend, Backend" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="link"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Project URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setEditId(null);
+                    form.reset();
+                    setImagePreview("");
+                    setUploadedImage(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={editProjectMutation.isPending}
+                >
+                  {editProjectMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Project"
                   )}
                 </Button>
               </DialogFooter>

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import AdminLayout from "@/components/admin/AdminLayout";
@@ -109,6 +109,8 @@ type ExperienceFormValues = z.infer<typeof experienceFormSchema>;
 export default function AdminExperience() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [uploadedLogo, setUploadedLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -121,7 +123,7 @@ export default function AdminExperience() {
   
   const deleteExperienceMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/experiences/${id}`);
+      await apiRequest(`/api/admin/experiences/${id}`, { method: "DELETE" });
       return id;
     },
     onSuccess: () => {
@@ -136,6 +138,34 @@ export default function AdminExperience() {
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to delete experience",
+        variant: "destructive",
+      });
+    },
+  });
+  
+  // Edit mutation for updating existing experiences
+  const editExperienceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: ExperienceFormValues }) => {
+      // Use the API schema to transform the form data
+      const apiData = experienceApiSchema.parse(data);
+      return apiRequest(`/api/admin/experiences/${id}`, { method: "PUT" }, apiData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Experience updated",
+        description: "Your experience entry has been updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/experiences'] });
+      setShowEditDialog(false);
+      setEditId(null);
+      form.reset();
+      setLogoPreview("");
+      setUploadedLogo(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update experience",
         variant: "destructive",
       });
     },
@@ -161,8 +191,7 @@ export default function AdminExperience() {
     mutationFn: async (data: ExperienceFormValues) => {
       // Use the API schema to transform the form data
       const apiData = experienceApiSchema.parse(data);
-      const response = await apiRequest("POST", "/api/admin/experiences", apiData);
-      return response.json();
+      return apiRequest("/api/admin/experiences", { method: "POST" }, apiData);
     },
     onSuccess: () => {
       toast({
@@ -279,7 +308,35 @@ export default function AdminExperience() {
                             <Eye className="h-4 w-4" />
                           </a>
                         </Button>
-                        <Button variant="ghost" size="icon">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => {
+                            setEditId(experience.id);
+                            
+                            // Populate form with existing data
+                            form.reset({
+                              title: experience.title,
+                              company: experience.company,
+                              location: experience.location,
+                              period: experience.period,
+                              category: experience.category as "backend" | "frontend" | "ai-ml" | "devops" | "management",
+                              description: experience.description.join('\n'),
+                              technologies: experience.technologies.join(', '),
+                              achievements: experience.achievements.join('\n'),
+                              logo: experience.logo || "",
+                            });
+                            
+                            // Set logo preview if exists
+                            if (experience.logo) {
+                              setLogoPreview(experience.logo);
+                            } else {
+                              setLogoPreview("");
+                            }
+                            
+                            setShowEditDialog(true);
+                          }}
+                        >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button 
@@ -544,6 +601,252 @@ export default function AdminExperience() {
                     </>
                   ) : (
                     "Create Experience"
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Experience</DialogTitle>
+            <DialogDescription>
+              Update the details of this experience entry
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form 
+              onSubmit={form.handleSubmit((data) => {
+                if (editId) {
+                  // If we have an uploaded logo, use the data URL
+                  if (uploadedLogo && logoPreview) {
+                    const formWithLogo = {
+                      ...data,
+                      logo: logoPreview,
+                    };
+                    editExperienceMutation.mutate({ id: editId, data: formWithLogo });
+                  } else {
+                    editExperienceMutation.mutate({ id: editId, data });
+                  }
+                }
+              })} 
+              className="space-y-6"
+            >
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Job Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Senior Developer" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Google" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input placeholder="San Francisco, CA" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="period"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Time Period</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Jan 2020 - Present" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="category"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Category</FormLabel>
+                    <FormControl>
+                      <select
+                        className="w-full px-3 py-2 border border-input rounded-md"
+                        {...field}
+                      >
+                        <option value="backend">Backend</option>
+                        <option value="frontend">Frontend</option>
+                        <option value="ai-ml">AI/ML</option>
+                        <option value="devops">DevOps</option>
+                        <option value="management">Management</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter job responsibilities (one per line)" 
+                        className="min-h-[120px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="technologies"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Technologies</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Python, SQL, AWS" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="logo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Company Logo URL (Optional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="https://example.com/logo.png" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="space-y-2">
+                    <Label>Or Upload a Logo</Label>
+                    <div className="flex flex-col gap-4">
+                      <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        className="hidden" 
+                        accept="image/*" 
+                        onChange={handleLogoUpload}
+                      />
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={triggerFileUpload}
+                        className="flex items-center gap-2"
+                      >
+                        <Upload className="h-4 w-4" />
+                        Choose Logo
+                      </Button>
+                      
+                      {logoPreview && (
+                        <div className="mt-2">
+                          <p className="text-sm text-muted-foreground mb-2">Logo Preview:</p>
+                          <div className="relative rounded-md overflow-hidden border w-40 h-40">
+                            <img 
+                              src={logoPreview} 
+                              alt="Preview" 
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="achievements"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Key Achievements</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Enter key achievements (one per line)" 
+                        className="min-h-[120px]" 
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditDialog(false);
+                    setEditId(null);
+                    form.reset();
+                    setLogoPreview("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={editExperienceMutation.isPending}
+                >
+                  {editExperienceMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Experience"
                   )}
                 </Button>
               </DialogFooter>

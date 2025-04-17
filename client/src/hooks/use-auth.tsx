@@ -37,10 +37,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Query for checking authentication status
   const { data: authData, refetch: refetchAuth } = useQuery({
-    queryKey: ["/api/user"],
+    queryKey: ["/api/auth/me"],
     queryFn: async () => {
       try {
-        const response = await apiRequest("/api/user");
+        const response = await apiRequest("/api/auth/me");
         return response;
       } catch (error) {
         if (error instanceof Response && error.status === 401) {
@@ -57,8 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Update auth state when query data changes
   useEffect(() => {
-    if (authData) {
-      setUser(authData);
+    if (authData && authData.authenticated && authData.user) {
+      // If authenticated, set the user object
+      setUser(authData.user);
       setIsAuthenticated(true);
     } else {
       setUser(null);
@@ -70,18 +71,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginCredentials) => {
-      const response = await apiRequest("/api/login", { method: "POST" }, credentials);
+      const response = await apiRequest("/api/auth/login", { method: "POST" }, credentials);
       return response;
     },
     onSuccess: (data) => {
-      setUser(data);
-      setIsAuthenticated(true);
-      queryClient.setQueryData(["/api/user"], data);
-      
-      toast({
-        title: "Login successful",
-        description: "You have been logged in successfully",
-      });
+      if (data && data.user) {
+        setUser(data.user);
+        setIsAuthenticated(true);
+        // Store the response in the expected format for /api/auth/me
+        queryClient.setQueryData(["/api/auth/me"], {
+          authenticated: true,
+          user: data.user
+        });
+        
+        toast({
+          title: "Login successful",
+          description: "You have been logged in successfully",
+        });
+      } else {
+        toast({
+          title: "Login error",
+          description: "Invalid response from server",
+          variant: "destructive",
+        });
+      }
     },
     onError: (error) => {
       toast({
@@ -95,14 +108,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("/api/logout", { method: "POST" });
+      await apiRequest("/api/auth/logout", { method: "POST" });
       return true;
     },
     onSuccess: () => {
       setUser(null);
       setIsAuthenticated(false);
-      queryClient.setQueryData(["/api/user"], null);
-      queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+      // Update the cached data to match the expected format
+      queryClient.setQueryData(["/api/auth/me"], { authenticated: false });
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       
       toast({
         title: "Logged out",

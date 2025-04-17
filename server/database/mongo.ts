@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Get MongoDB URI from environment with fallback to local development URI
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/portfolio';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:5000/portfolio';
 
 // Improved MongoDB connection options for reliability
 // These options are supported by Mongoose/MongoDB driver

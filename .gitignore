@@ -40,3 +40,4 @@ dist-ssr
 # Temp files
 tmp_social_log.txt
 cookies.txt
+.vercel
