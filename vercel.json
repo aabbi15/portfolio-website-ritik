@@ -2,7 +2,7 @@
     "version": 2,
     "builds": [
       {
-        "src": "server/index.ts",
+        "src": "dist/index.js",
         "use": "@vercel/node",
         "config": {
           "maxDuration": 10,
@@ -10,19 +10,13 @@
         }
       },
       {
-        "src": "vite.config.ts",
-        "use": "@vercel/vite"
+        "src": "dist/**",
+        "use": "@vercel/static"
       }
     ],
     "routes": [
-      {
-        "src": "/api/(.*)",
-        "dest": "server/index.ts"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "vite.config.ts"
-      }
+      { "src": "/api/(.*)", "dest": "dist/index.js" },
+      { "src": "/(.*)", "dest": "dist/$1" }
     ],
     "env": {
       "NODE_ENV": "production"
